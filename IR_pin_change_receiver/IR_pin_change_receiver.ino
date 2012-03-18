@@ -2,14 +2,9 @@
 #include <avr/interrupt.h>
 #include <util/atomic.h>
 #include "my_ir_codes.h"
+
 #define IRpin_PIN      PINB
 #define IRpin          0
-
-#define MAXPULSE 65000U
-#define MINPULSE 5U
-#define REPEAT_CODE_PAUSE 250 // this has to be signed !
-#define NUMPULSES 72U
-#define FUZZINESS 20U
 
 //#define DEBUG
 
@@ -21,68 +16,114 @@ uint16_t *pulses_read_from = pulses_b;
 
 uint32_t last_IR_activity = 0;
 
-int main(void) {
-  
-        init();
-        
+int main(void)
+{
+	init();
+
 	Serial.begin(115200);
-	Serial.println("Ready to decode IR!");
+	Serial.println(F("Ready to decode IR!"));
 	pinMode(13, OUTPUT);
 	digitalWrite(13, LOW);
 	zero_pulses(pulses_read_from);
 	zero_pulses(pulses_write_to);
-        
-        DDRB &= ~_BV(PB0); // PB0 as input (arduino pin #8)
-        PORTB |= _BV(PB0); // pull-up on
-        
+
+	DDRB &= ~_BV(PB0);	// PB0 as input (arduino pin #8)
+	PORTB |= _BV(PB0);	// pull-up on
+
 	PCICR |= _BV(PCIE0);	// enable pin-change interrupt for pin-group 0
 	PCMSK0 |= _BV(PCINT0);	// enable pin-change interrupt por pin PB0 (PCINT0)  
-          
-        while(1) {
-	        static uint16_t pulse_counter = 0;
-        	if (IR_available()) {
-	        	Serial.print("pulse #: ");
-        		Serial.print(pulse_counter);
-                        switch (eval_IR_code(pulses_read_from, IRsignal_vol_down)) {
-                                case 1:
-                                        Serial.print(" - volume down");
-                                break;
-                                case 2:
-                                        Serial.print(" - repeat code");
-                                default:
-                                break;
-                        }
-                        switch (eval_IR_code(pulses_read_from, IRsignal_vol_up)) {
-                                case 1:
-                                        Serial.print(" - volume up");
-                                break;
-                                case 2:
-                                        Serial.print(" - repeat code");
-                                default:
-                                break;
-                        }
-                        switch (eval_IR_code(pulses_read_from, IRsignal_stop_mode)) {
-                                case 1:
-                                        Serial.print(" - stop/mode");
-                                break;
-                                case 2:
-                                        Serial.print(" - repeat code");
-                                default:
-                                break;
-                        }                        
-                        switch (eval_IR_code(pulses_read_from, IRsignal_play_pause)) {
-                                case 1:
-                                        Serial.print(" - play/pause");
-                                break;
-                                case 2:
-                                        Serial.print(" - repeat code");
-                                default:
-                                break;
-                        }                  
-                        Serial.println("");
-	        	pulse_counter++;
-        	}    
-        } 
+
+	while (1) {
+		static uint16_t pulse_counter = 0;
+		if (IR_available()) {
+#ifdef DEBUG
+			Serial.print(F("\r\n\npulse #: "));
+#else
+			Serial.print(F("pulse #: "));
+#endif
+			Serial.print(pulse_counter);
+			Serial.print(F(" - "));
+			switch (eval_IR_code(pulses_read_from)) {
+			case VOL_DOWN:
+				Serial.println(F("volume down"));
+				break;
+			case PLAY_PAUSE:
+				Serial.println(F("play/pause"));
+				break;
+			case VOL_UP:
+				Serial.println(F("volume up"));
+				break;
+			case SETUP_KEY:
+				Serial.println(F("setup"));
+				break;
+			case ARROW_UP:
+				Serial.println(F("arrow up"));
+				break;
+			case STOP_MODE:
+				Serial.println(F("stop/mode"));
+				break;
+			case ARROW_LEFT:
+				Serial.println(F("arrow left"));
+				break;
+			case ENTER_SAVE:
+				Serial.println(F("enter/save"));
+				break;
+			case ARROW_RIGHT:
+				Serial.println(F("arrow right"));
+				break;
+			case DIGIT_0_OR_10:
+				Serial.println(F("0 or 10"));
+				break;
+			case ARROW_DOWN:
+				Serial.println(F("arrow down"));
+				break;
+			case ARROW_REPEAT:
+				Serial.println(F("arrow repeat"));
+				break;
+			case DIGIT_1:
+				Serial.println(F("1"));
+				break;
+			case DIGIT_2:
+				Serial.println(F("2"));
+				break;
+			case DIGIT_3:
+				Serial.println(F("3"));
+				break;
+			case DIGIT_4:
+				Serial.println(F("4"));
+				break;
+			case DIGIT_5:
+				Serial.println(F("5"));
+				break;
+			case DIGIT_6:
+				Serial.println(F("6"));
+				break;
+			case DIGIT_7:
+				Serial.println(F("7"));
+				break;
+			case DIGIT_8:
+				Serial.println(F("8"));
+				break;
+			case DIGIT_9:
+				Serial.println(F("9"));
+				break;
+			case REPEAT_CODE:
+				Serial.println(F("repeat code"));
+				break;
+			case MISMATCH:
+				Serial.
+				    println(F
+					    ("CODE MISMATCH - ARGH ARGH ARGH"));
+				break;
+			case NOT_SURE_YET:
+				Serial.println(F("this should never be seen"));
+				break;
+			default:
+				break;
+			}
+			pulse_counter++;
+		}
+	}
 }
 
 ISR(PCINT0_vect)
@@ -131,7 +172,7 @@ void flip_buffers(void)
 	}
 }
 
-uint8_t IR_available()
+uint8_t IR_available(void)
 {
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		if (last_IR_activity != 0
@@ -141,77 +182,68 @@ uint8_t IR_available()
 			return 1;
 		}
 	}
+	return 0;
 }
 
-uint8_t eval_IR_code(uint16_t * pulses_measured,
-		     const uint16_t * pulses_reference)
+IR_code_t eval_IR_code(uint16_t * pulses_measured)
 {
-	uint8_t ctr;
+	uint8_t ctr1;
+	uint8_t ctr2;
+	IR_code_t IR_code;
+	for (ctr2 = 0; ctr2 < NUMBER_OF_IR_CODES; ctr2++) {
 #ifdef DEBUG
-	Serial.println("\r\nstart:");
+		Serial.print(F("\r\nChecking against array element #: "));
+		Serial.println(ctr2);
 #endif
-	for (ctr = 0; ctr < NUMPULSES-6; ctr++) {
-		int16_t measured = (int16_t) (pulses_measured[ctr]);
-		int16_t reference =
-		    (int16_t) (pgm_read_word(&pulses_reference[ctr]));
-		uint16_t delta = (uint16_t) abs(measured - reference);
-                uint16_t delta_repeat = (uint16_t) abs(measured - REPEAT_CODE_PAUSE);
+		IR_code = NOT_SURE_YET;
+
+		for (ctr1 = 0; ctr1 < NUMPULSES - 6; ctr1++) {
+			int16_t measured = (int16_t) (pulses_measured[ctr1]);
+			int16_t reference =
+			    (int16_t) pgm_read_word(&IRsignals[ctr2][ctr1]);
+			uint16_t delta = (uint16_t) abs(measured - reference);
+			uint16_t delta_repeat =
+			    (uint16_t) abs(measured - REPEAT_CODE_PAUSE);
 #ifdef DEBUG
-		Serial.print("measured: ");
-		Serial.print(measured);
-		Serial.print(" - reference: ");
-		Serial.print(reference);
-		Serial.print(" - delta: ");
-		Serial.print(delta);
-                Serial.print(" - delta_rpt_code: ");
-                Serial.print(delta_repeat);
+			Serial.print(F("measured: "));
+			Serial.print(measured);
+			Serial.print(F(" - reference: "));
+			Serial.print(reference);
+			Serial.print(F(" - delta: "));
+			Serial.print(delta);
+			Serial.print(F(" - delta_rpt_code: "));
+			Serial.print(delta_repeat);
 #endif
-		if ( delta > (reference * FUZZINESS / 100) ) {
-                        if( delta_repeat < REPEAT_CODE_PAUSE * FUZZINESS / 100) {
-#ifdef DEBUG                          
-                                Serial.println(" - repeat code (ok)");
-#endif                                
-                                zero_pulses(pulses_measured);
-                                return 2;
-                        }
+			if (delta > (reference * FUZZINESS / 100)) {
+				if (delta_repeat <
+				    REPEAT_CODE_PAUSE * FUZZINESS / 100) {
 #ifdef DEBUG
-			Serial.println(" - (x)");
+					Serial.
+					    println(F(" - repeat code (ok)"));
 #endif
-                        //
-                        // prints the whole failed IR data
-                        //
-                        //print_pulse(pulses_measured, pulses_reference); // print failed IR data
-			return 0;
-		} else {
+					zero_pulses(pulses_measured);
+					IR_code = REPEAT_CODE;
+					break;
+				}
 #ifdef DEBUG
-			Serial.println(" - (ok)");
+				Serial.println(F(" - (x)"));
 #endif
+				IR_code = MISMATCH;
+				break;
+			} else {
+#ifdef DEBUG
+				Serial.println(F(" - (ok)"));
+#endif
+			}
+		}
+		if (IR_code == REPEAT_CODE) {
+			break;
+		}
+		if (IR_code == NOT_SURE_YET) {
+			IR_code = (IR_code_t) (ctr2);
+			break;
 		}
 	}
 	zero_pulses(pulses_measured);
-	return 1;
-}
-
-void print_pulse(uint16_t * pulses_measured, const uint16_t * pulses_reference) {
-        uint8_t ctr;
-      	Serial.println("\r\nstart:");
-	for (ctr = 0; ctr < NUMPULSES-6; ctr++) {
-		int16_t measured = (int16_t) (pulses_measured[ctr]);
-		int16_t reference =
-		    (int16_t) (pgm_read_word(&pulses_reference[ctr]));
-		uint16_t delta = (uint16_t) abs(measured - reference);
-		Serial.print("measured: ");
-		Serial.print(measured);
-		Serial.print(" - reference: ");
-		Serial.print(reference);
-		Serial.print(" - delta: ");
-        	Serial.print(delta);  
-
-		if (delta > (reference * FUZZINESS / 100)) {
-			Serial.println(" - (x)");
-
-		} else {
-			Serial.println(" - (ok)");
-		}        
-        }
+	return IR_code;
 }
