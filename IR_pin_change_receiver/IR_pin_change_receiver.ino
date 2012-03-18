@@ -9,10 +9,10 @@
 //#define DEBUG
 
 // double buffering
-uint16_t pulses_a[NUMPULSES];
-uint16_t pulses_b[NUMPULSES];
-uint16_t *pulses_write_to = pulses_a;
-uint16_t *pulses_read_from = pulses_b;
+volatile uint16_t pulses_a[NUMPULSES];
+volatile uint16_t pulses_b[NUMPULSES];
+volatile uint16_t *pulses_write_to = pulses_a;
+volatile uint16_t *pulses_read_from = pulses_b;
 
 uint32_t last_IR_activity = 0;
 
@@ -154,7 +154,7 @@ ISR(PCINT0_vect)
 	last_IR_activity = micros();
 }
 
-void zero_pulses(uint16_t * array)
+void zero_pulses(volatile uint16_t * array)
 {
 	uint8_t ctr;
 	for (ctr = 0; ctr < NUMPULSES; ctr++) {
@@ -165,7 +165,7 @@ void zero_pulses(uint16_t * array)
 void flip_buffers(void)
 {
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		uint16_t *tmp;
+		volatile uint16_t *tmp;
 		tmp = pulses_read_from;
 		pulses_read_from = pulses_write_to;
 		pulses_write_to = tmp;
@@ -185,7 +185,7 @@ uint8_t IR_available(void)
 	return 0;
 }
 
-IR_code_t eval_IR_code(uint16_t * pulses_measured)
+IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 {
 	uint8_t ctr1;
 	uint8_t ctr2;
