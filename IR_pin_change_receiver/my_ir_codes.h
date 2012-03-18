@@ -1,7 +1,23 @@
+/*
+ * data is in extended NEC format ( http://www.sbprojects.com/knowledge/ir/nec.php )
+ *
+ * start: (9.0ms, 4.5ms)
+ * logic 0: (560µs, 560µs)
+ * logic 1: (560µs, 1690µs)
+ * address low byte
+ * address high byte
+ * command byte
+ * logically inverted command byte
+ * "something" <-- my remote seems to mess this up quite often (sends a very short pulse intead of 4000 something), so I don't check the last pulses
+ * repeat-code
+ *
+ */
+
 const uint16_t PROGMEM IRsignal_vol_down[] = {
 // ON, OFF (in 10's of microseconds)
-	882, 438,
-	54, 56,
+	882, 438,		// start
+
+	54, 56,			// address low-byte
 	52, 58,
 	52, 54,
 	56, 54,
@@ -9,15 +25,17 @@ const uint16_t PROGMEM IRsignal_vol_down[] = {
 	54, 54,
 	56, 54,
 	54, 56,
-	54, 164,
-	52, 166,
-	54, 166,
-	52, 166,
-	52, 166,
-	56, 164,
-	54, 54,
-	54, 166,
-	52, 56,
+
+	54, 164,		// address high-byte
+	52, 166,		//
+	54, 166,		// if this were the 'standard' NEC format
+	52, 166,		// this byte would be the logical inverse
+	52, 166,		// of the address low-byte
+	56, 164,		//
+	54, 54,			// obviously this is not the case ;-)
+	54, 166,		//
+
+	52, 56,			// command byte
 	54, 56,
 	52, 58,
 	52, 54,
@@ -25,7 +43,8 @@ const uint16_t PROGMEM IRsignal_vol_down[] = {
 	54, 56,
 	54, 54,
 	56, 54,
-	54, 164,
+
+	54, 164,		// command byte inverted
 	56, 164,
 	52, 166,
 	52, 166,
@@ -33,8 +52,10 @@ const uint16_t PROGMEM IRsignal_vol_down[] = {
 	54, 164,
 	52, 166,
 	56, 164,
-	54, 4002,
-	878, 218,
+
+	54, 4002,		// "stuff"
+
+	878, 218,		// repeat code
 	54, 0
 };
 
@@ -360,43 +381,42 @@ const uint16_t PROGMEM IRsignal_arrow_right[] = {
 
 const uint16_t PROGMEM IRsignal_digit_0_or_10[] = {
 // ON, OFF (in 10's of microseconds)
-	32, 356,
-	656, 440,
-	54, 54,
+	880, 438,
+	56, 54,
 	52, 58,
-	52, 58,
-	52, 58,
-	50, 58,
-	52, 56,
+	52, 54,
+	56, 54,
 	54, 56,
+	54, 54,
+	56, 54,
 	52, 58,
 	52, 166,
 	52, 166,
-	54, 168,
-	50, 168,
-	50, 168,
-	50, 174,
-	18, 102,
+	54, 166,
+	52, 166,
+	52, 166,
+	56, 164,
+	54, 54,
 	54, 166,
 	52, 56,
 	54, 56,
+	52, 164,
+	56, 166,
+	52, 54,
+	56, 54,
+	54, 56,
+	54, 54,
+	56, 164,
+	54, 164,
+	54, 56,
+	54, 54,
+	56, 164,
+	54, 164,
 	52, 166,
-	54, 168,
-	50, 58,
-	52, 58,
-	50, 60,
-	50, 58,
-	52, 168,
-	50, 168,
-	50, 60,
-	52, 56,
-	52, 168,
-	50, 168,
-	52, 166,
-	54, 168,
-	50, 4002,
-	880, 218,
-	52, 0
+	56, 164,
+	54, 4002,
+	878, 218,
+	54, 0
 };
 
 const uint16_t PROGMEM IRsignal_arrow_down[] = {
@@ -441,32 +461,32 @@ const uint16_t PROGMEM IRsignal_arrow_down[] = {
 
 const uint16_t PROGMEM IRsignal_arrow_repeat[] = {
 // ON, OFF (in 10's of microseconds)
-	882, 438,
-	56, 54,
-	52, 58,
-	52, 54,
+	882, 436,
 	56, 54,
 	54, 56,
 	54, 54,
 	56, 54,
-	52, 58,
-	52, 166,
-	52, 166,
-	54, 166,
-	52, 166,
-	52, 166,
-	56, 164,
-	54, 54,
-	56, 164,
-	52, 56,
-	54, 166,
-	52, 166,
-	52, 166,
-	56, 54,
 	52, 56,
 	54, 54,
 	56, 54,
+	54, 56,
 	54, 164,
+	54, 164,
+	56, 164,
+	54, 164,
+	54, 164,
+	56, 164,
+	54, 54,
+	56, 164,
+	54, 54,
+	56, 164,
+	54, 164,
+	54, 164,
+	56, 54,
+	52, 58,
+	52, 56,
+	54, 56,
+	52, 164,
 	56, 54,
 	54, 56,
 	54, 54,
@@ -475,50 +495,46 @@ const uint16_t PROGMEM IRsignal_arrow_repeat[] = {
 	54, 164,
 	56, 164,
 	54, 4002,
-	880, 216,
+	878, 220,
 	54, 0
 };
 
 const uint16_t PROGMEM IRsignal_digit_1[] = {
 // ON, OFF (in 10's of microseconds)
-	54, 198,
-	118, 208,
-	532, 440,
-	54, 56,
+	880, 438,
+	56, 54,
 	52, 58,
-	52, 56,
+	52, 54,
+	56, 54,
 	54, 56,
-	52, 60,
-	48, 60,
+	54, 54,
+	56, 54,
 	54, 56,
-	52, 58,
-	50, 168,
-	50, 168,
-	54, 166,
 	52, 166,
 	52, 166,
-	54, 166,
+	56, 164,
+	54, 164,
+	54, 164,
+	56, 164,
+	54, 54,
+	56, 164,
+	54, 54,
+	56, 54,
 	52, 56,
-	54, 166,
-	52, 56,
+	54, 54,
+	56, 164,
+	54, 54,
+	56, 54,
 	54, 56,
-	50, 60,
-	50, 58,
-	52, 168,
-	50, 58,
-	52, 58,
-	50, 58,
-	52, 168,
-	50, 166,
-	54, 168,
-	50, 168,
-	50, 60,
-	50, 168,
-	50, 168,
-	52, 168,
-	50, 4006,
-	874, 222,
-	52, 0
+	54, 164,
+	54, 164,
+	56, 164,
+	54, 164,
+	54, 56,
+	54, 164,
+	54, 164,
+	56, 164,
+	54, 0
 };
 
 const uint16_t PROGMEM IRsignal_digit_2[] = {
