@@ -7,6 +7,7 @@
 #define IRpin          0
 
 //#define DEBUG
+//#define TRANSLATE_REPEAT_CODE // instead of outputting 'repeat code' output the previously recognized IR code
 
 // double buffering
 volatile uint16_t pulses_a[NUMPULSES];
@@ -189,6 +190,9 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 {
 	uint8_t ctr1;
 	uint8_t ctr2;
+#ifdef TRANSLATE_REPEAT_CODE
+        static IR_code_t prev_IR_code = NOT_SURE_YET;
+#endif
 	IR_code_t IR_code;
 	for (ctr2 = 0; ctr2 < NUMBER_OF_IR_CODES; ctr2++) {
 #ifdef DEBUG
@@ -237,6 +241,9 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 			}
 		}
 		if (IR_code == REPEAT_CODE) {
+#ifdef TRANSLATE_REPEAT_CODE
+                        IR_code = prev_IR_code;
+#endif
 			break;
 		}
 		if (IR_code == NOT_SURE_YET) {
@@ -244,6 +251,9 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 			break;
 		}
 	}
+#ifdef TRANSLATE_REPEAT_CODE
+        prev_IR_code = IR_code;
+#endif        
 	zero_pulses(pulses_measured);
 	return IR_code;
 }
