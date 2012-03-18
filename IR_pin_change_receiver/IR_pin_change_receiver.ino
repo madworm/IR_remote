@@ -7,7 +7,7 @@
 #define IRpin          0
 
 //#define DEBUG
-//#define TRANSLATE_REPEAT_CODE // instead of outputting 'repeat code' output the previously recognized IR code
+#define TRANSLATE_REPEAT_CODE	// instead of outputting 'repeat code' output the previously recognized IR code
 
 // double buffering
 volatile uint16_t pulses_a[NUMPULSES];
@@ -19,7 +19,7 @@ uint32_t last_IR_activity = 0;
 
 int main(void)
 {
-	init();
+	init();			// take care of Arduino timers etc. etc.
 
 	Serial.begin(115200);
 	Serial.println(F("Ready to decode IR!"));
@@ -114,7 +114,7 @@ int main(void)
 			case MISMATCH:
 				Serial.
 				    println(F
-					    ("CODE MISMATCH - ARGH ARGH ARGH"));
+					    ("UNKNOWN / CODE MISMATCH - ARGH ARGH ARGH"));
 				break;
 			case NOT_SURE_YET:
 				Serial.println(F("this should never be seen"));
@@ -191,7 +191,7 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 	uint8_t ctr1;
 	uint8_t ctr2;
 #ifdef TRANSLATE_REPEAT_CODE
-        static IR_code_t prev_IR_code = NOT_SURE_YET;
+	static IR_code_t prev_IR_code = NOT_SURE_YET;
 #endif
 	IR_code_t IR_code;
 	for (ctr2 = 0; ctr2 < NUMBER_OF_IR_CODES; ctr2++) {
@@ -222,8 +222,8 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 				if (delta_repeat <
 				    REPEAT_CODE_PAUSE * FUZZINESS / 100) {
 #ifdef DEBUG
-					Serial.
-					    println(F(" - repeat code (ok)"));
+					Serial.println(F
+						       (" - repeat code (ok)"));
 #endif
 					zero_pulses(pulses_measured);
 					IR_code = REPEAT_CODE;
@@ -242,7 +242,7 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 		}
 		if (IR_code == REPEAT_CODE) {
 #ifdef TRANSLATE_REPEAT_CODE
-                        IR_code = prev_IR_code;
+			IR_code = prev_IR_code;
 #endif
 			break;
 		}
@@ -252,8 +252,8 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 		}
 	}
 #ifdef TRANSLATE_REPEAT_CODE
-        prev_IR_code = IR_code;
-#endif        
+	prev_IR_code = IR_code;
+#endif
 	zero_pulses(pulses_measured);
 	return IR_code;
 }
