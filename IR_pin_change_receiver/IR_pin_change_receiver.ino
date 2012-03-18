@@ -41,9 +41,9 @@ void loop(void)
 		if (eval_IR_code(pulses_read_from, IRsignal_vol_down) > 0) {
 			Serial.println(" - volume down");
 		} else if (eval_IR_code(pulses_read_from, IRsignal_vol_up) > 0) {
-			Serial.println("- volume up");
+			Serial.println(" - volume up");
 		} else if (eval_IR_code(pulses_read_from, IRsignal_setup) > 0) {
-			Serial.println("- setup");
+			Serial.println(" - setup");
 		} else {
 			Serial.println("");
 		}
