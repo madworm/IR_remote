@@ -20,8 +20,10 @@ uint16_t *pulses_read_from = pulses_b;
 
 uint32_t last_IR_activity = 0;
 
-void setup(void)
-{
+int main(void) {
+  
+        init();
+        
 	Serial.begin(115200);
 	Serial.println("Ready to decode IR!");
 	pinMode(13, OUTPUT);
@@ -29,26 +31,25 @@ void setup(void)
 	zero_pulses(pulses_read_from);
 	zero_pulses(pulses_write_to);
 	PCICR |= _BV(PCIE0);	// enable pin-change interrupt for pin-group 0
-	PCMSK0 |= _BV(PCINT0);	// enable pin-change interrupt por pin PB0 (PCINT0)
-}
-
-void loop(void)
-{
-	static uint16_t pulse_counter = 0;
-	if (IR_available()) {
-		Serial.print("pulse #: ");
-		Serial.print(pulse_counter);
-		if (eval_IR_code(pulses_read_from, IRsignal_vol_down) > 0) {
-			Serial.println(" - volume down");
-		} else if (eval_IR_code(pulses_read_from, IRsignal_vol_up) > 0) {
-			Serial.println(" - volume up");
-		} else if (eval_IR_code(pulses_read_from, IRsignal_setup) > 0) {
-			Serial.println(" - setup");
-		} else {
-			Serial.println("");
-		}
-		pulse_counter++;
-	}
+	PCMSK0 |= _BV(PCINT0);	// enable pin-change interrupt por pin PB0 (PCINT0)  
+          
+        while(1) {
+	        static uint16_t pulse_counter = 0;
+        	if (IR_available()) {
+	        	Serial.print("pulse #: ");
+        		Serial.print(pulse_counter);
+	        	if (eval_IR_code(pulses_read_from, IRsignal_vol_down) > 0) {
+		        	Serial.println(" - volume down");
+          		} else if (eval_IR_code(pulses_read_from, IRsignal_vol_up) > 0) {
+	        		Serial.println(" - volume up");
+        		} else if (eval_IR_code(pulses_read_from, IRsignal_setup) > 0) {
+	        		Serial.println(" - setup");
+        		} else {
+	        		Serial.println("");
+        		}
+	        	pulse_counter++;
+        	}    
+        } 
 }
 
 ISR(PCINT0_vect)
