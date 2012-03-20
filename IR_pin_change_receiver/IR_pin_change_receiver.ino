@@ -3,9 +3,6 @@
 #include <util/atomic.h>
 #include "my_ir_codes.h"
 
-#define IRpin_PIN      PINB
-#define IRpin          0
-
 //#define DEBUG
 #define TRANSLATE_REPEAT_CODE	// instead of outputting 'repeat code' output the previously recognized IR code
 
