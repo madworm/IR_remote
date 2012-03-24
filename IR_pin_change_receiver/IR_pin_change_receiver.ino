@@ -12,7 +12,7 @@ volatile uint16_t pulses_b[NUMPULSES];
 volatile uint16_t *pulses_write_to = pulses_a;
 volatile uint16_t *pulses_read_from = pulses_b;
 
-uint32_t last_IR_activity = 0;
+volatile uint32_t last_IR_activity = 0;
 
 int main(void)
 {
