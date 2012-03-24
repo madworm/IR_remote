@@ -222,7 +222,6 @@ IR_code_t eval_IR_code(volatile uint16_t * pulses_measured)
 					Serial.println(F
 						       (" - repeat code (ok)"));
 #endif
-					zero_pulses(pulses_measured);
 					IR_code = REPEAT_CODE;
 					break;
 				}
